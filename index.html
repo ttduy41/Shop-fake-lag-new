@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinhMod Shop - Ultimate System</title>
+    <style>
+        :root { --bg: #f4f7f6; --text: #2c3e50; --card: #ffffff; --accent: #27ae60; --admin: #e74c3c; --pending: #f39c12; }
+        [data-theme="dark"] { --bg: #1a1a1a; --text: #f5f6fa; --card: #2d2d2d; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; transition: 0.3s; }
+
+        /* AUTH SCREEN */
+        #authScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: var(--card); padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; border: 2px solid var(--accent); }
+        
+        #mainApp { display: none; }
+        header { position: fixed; top: 0; width: 100%; height: 65px; background: var(--card); display: flex; align-items: center; padding: 0 20px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); z-index: 1000; box-sizing: border-box; }
+        .user-meta { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+        .balance-box { background: #000; color: #00ff00; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-family: monospace; border: 1px solid #00ff00; }
+
+        /* MENU & ADMIN PANEL */
+        #sideMenu { position: fixed; top: 0; left: -310px; width: 300px; height: 100%; background: var(--card); box-shadow: 5px 0 25px rgba(0,0,0,0.4); transition: 0.4s; z-index: 2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        #overlay { display: none; position: fixed; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1500; }
+        #robotBox { display: none; background: #2d3436; color: #f1c40f; padding: 15px; border-radius: 15px; border: 2px solid #f1c40f; margin-bottom: 20px; }
+        #robotSay { font-size: 11px; color: #00ff00; background: #000; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #444; }
+        
+        /* DUYỆT THẺ SECTION */
+        .pending-container { margin-top: 15px; border-top: 1px solid #555; padding-top: 10px; }
+        .card-item { background: #111; color: #fff; font-size: 11px; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--pending); }
+        .card-btns { display: flex; gap: 5px; margin-top: 5px; }
+        .btn-ok { background: var(--accent); color: white; border: none; flex: 1; padding: 5px; border-radius: 4px; cursor: pointer; }
+        .btn-no { background: var(--admin); color: white; border: none; flex: 1; padding: 5px; border-radius: 4px; cursor: pointer; }
+
+        /* SHOP GRID */
+        .shop-container { margin-top: 90px; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 20px; max-width: 1200px; margin: auto; padding-bottom: 80px; }
+        .product-card { background: var(--card); padding: 20px; border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 5px solid var(--accent); text-align: center; }
+        .stock-info { display: flex; justify-content: space-between; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 12px; }
+        .stat-box b { display: block; color: var(--accent); font-size: 15px; }
+
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px; border: 1px solid #ddd; font-size: 14px; box-sizing: border-box; outline: none; }
+        .btn-main { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .btn-link { background: none; border: none; color: #3498db; cursor: pointer; font-size: 12px; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div id="authScreen">
+        <div class="auth-card" id="loginBox">
+            <h2 style="color:var(--accent); margin:0 0 15px 0;">VINHMOD LOGIN</h2>
+            <input type="text" id="userIn" placeholder="Tên tài khoản">
+            <input type="password" id="passIn" placeholder="Mật khẩu">
+            <button class="btn-main" onclick="handleLogin()">ĐĂNG NHẬP</button>
+            <button class="btn-link" onclick="switchAuth('reg')">Tạo tài khoản mới</button>
+        </div>
+        <div class="auth-card" id="regBox" style="display:none">
+            <h2 style="color:#3498db; margin:0 0 15px 0;">ĐĂNG KÝ</h2>
+            <input type="text" id="regUser" placeholder="Tên tài khoản mới">
+            <input type="password" id="regPass" placeholder="Mật khẩu mới">
+            <button class="btn-main" style="background:#3498db" onclick="handleRegister()">ĐĂNG KÝ NGAY</button>
+            <button class="btn-link" onclick="switchAuth('login')">Đã có tài khoản? Đăng nhập</button>
+        </div>
+    </div>
+
+    <div id="mainApp">
+        <header>
+            <div onclick="toggleMenu()" style="font-size: 28px; cursor: pointer;">☰</div>
+            <div class="user-meta">
+                <span id="displayUname" style="font-weight:bold;">User</span>
+                <div class="balance-box"><span id="moneyText">0</span>đ</div>
+                <button onclick="toggleTheme()" style="width:auto; border:none; background:none; font-size:20px; cursor:pointer;">🌓</button>
+            </div>
+        </header>
+
+        <div id="sideMenu">
+            <div id="robotBox">
+                <h4 style="margin:0;">🤖 QUẢN TRỊ VIÊN</h4>
+                <div id="robotSay">Chào sếp vinhmoddz! Kiểm tra thẻ khách nạp bên dưới:</div>
+                <div class="pending-container" id="pendingCards"></div>
+                <hr style="border:0.5px solid #555; margin:15px 0;">
+                <input type="text" id="robotIn" placeholder="Lệnh: chỉnh giá itachi vv 100k">
+                <button onclick="robotRun()" style="background:#f1c40f; color:#000; font-weight:bold; border:none; padding:10px; border-radius:10px;">THỰC THI</button>
+            </div>
+            
+            <h3 style="margin-top:0;">💳 NẠP THẺ CÀO</h3>
+            <div style="background: rgba(39, 174, 96, 0.1); padding: 12px; border-radius: 12px; border: 1px dashed var(--accent);">
+                <select id="cardType"><option>Viettel</option><option>Mobifone</option><option>Vinaphone</option><option>Zing</option><option>Garena</option></select>
+                <select id="cardValue"><option value="20000">20.000đ</option><option value="50000">50.000đ</option><option value="100000">100.000đ</option><option value="200000">200.000đ</option></select>
+                <input type="text" id="cardCode" placeholder="Mã số thẻ cào">
+                <button class="btn-main" style="background:#2980b9" onclick="requestNap()">GỬI THẺ CHỜ DUYỆT</button>
+            </div>
+            <button onclick="location.reload()" style="background:#e74c3c; color:#fff; border:none; margin-top:30px; width:100%; padding:10px; border-radius:10px;">ĐĂNG XUẤT</button>
+        </div>
+
+        <div id="overlay" onclick="toggleMenu()"></div>
+        <div class="shop-container" id="shopGrid"></div>
+    </div>
+
+    <script>
+        // --- 1. DỮ LIỆU & ĐỒNG BỘ LOCALSTORAGE ---
+        let users = JSON.parse(localStorage.getItem('v_users')) || { "vinhmoddz": { pass: "vinhmoddz", balance: 1000000, isAdmin: true } };
+        let products = JSON.parse(localStorage.getItem('v_prods')) || [
+            { id: 0, key: "itachi", name: "Itachi Ping V3", total: 100, sold: 0, prices: { "1d": 10000, "7d": 50000, "30d": 150000, "vv": 500000 } },
+            { id: 1, key: "hopper", name: "Hopper Plus", total: 100, sold: 0, prices: { "1d": 15000, "7d": 70000, "30d": 200000, "vv": 700000 } },
+            { id: 2, key: "clone", name: "Acc Clone LV 5", total: 500, sold: 0, prices: { "default": 5000 } }
+        ];
+        let pendingCards = JSON.parse(localStorage.getItem('v_pending')) || [];
+        let currentUser = null;
+
+        function syncData() {
+            localStorage.setItem('v_users', JSON.stringify(users));
+            localStorage.setItem('v_prods', JSON.stringify(products));
+            localStorage.setItem('v_pending', JSON.stringify(pendingCards));
+            if(currentUser) {
+                renderShop();
+                if(users[currentUser].isAdmin) renderPending();
+            }
+        }
+
+        // --- 2. HỆ THỐNG TÀI KHOẢN ---
+        function switchAuth(t) { 
+            document.getElementById('loginBox').style.display = t==='login'?'block':'none'; 
+            document.getElementById('regBox').style.display = t==='reg'?'block':'none'; 
+        }
+
+        function handleRegister() {
+            let u = document.getElementById('regUser').value.trim();
+            let p = document.getElementById('regPass').value.trim();
+            if(!u || !p) return alert("Vui lòng điền đủ!");
+            if(users[u]) return alert("Tài khoản đã tồn tại!");
+            users[u] = { pass: p, balance: 0, isAdmin: false };
+            syncData(); alert("Đăng ký thành công!"); switchAuth('login');
+        }
+
+        function handleLogin() {
+            let u = document.getElementById('userIn').value.trim();
+            let p = document.getElementById('passIn').value.trim();
+            if(users[u] && users[u].pass === p) {
+                currentUser = u;
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('displayUname').innerText = u;
+                document.getElementById('robotBox').style.display = users[u].isAdmin ? 'block' : 'none';
+                syncData();
+            } else alert("Sai tài khoản hoặc mật khẩu!");
+        }
+
+        // --- 3. NẠP THẺ & DUYỆT THẺ ---
+        function requestNap() {
+            let code = document.getElementById('cardCode').value.trim();
+            let val = parseInt(document.getElementById('cardValue').value);
+            let type = document.getElementById('cardType').value;
+            if(!code) return alert("Nhập mã thẻ!");
+            pendingCards.push({ id: Date.now(), user: currentUser, type, code, val });
+            syncData();
+            alert("Gửi thẻ thành công! Vui lòng chờ sếp duyệt tiền.");
+            document.getElementById('cardCode').value = "";
+        }
+
+        function renderPending() {
+            let area = document.getElementById('pendingCards');
+            area.innerHTML = pendingCards.length ? "" : "<small>Không có yêu cầu nạp.</small>";
+            pendingCards.forEach(c => {
+                area.innerHTML += `<div class="card-item">
+                    <b>Khách: ${c.user}</b><br>${c.type} - ${c.val.toLocaleString()}đ<br>Mã: ${c.code}
+                    <div class="card-btns">
+                        <button class="btn-ok" onclick="approveCard(${c.id})">DUYỆT</button>
+                        <button class="btn-no" onclick="rejectCard(${c.id})">HỦY</button>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function approveCard(id) {
+            let c = pendingCards.find(item => item.id === id);
+            if(c) {
+                users[c.user].balance += c.val;
+                pendingCards = pendingCards.filter(item => item.id !== id);
+                syncData();
+            }
+        }
+        function rejectCard(id) {
+            pendingCards = pendingCards.filter(item => item.id !== id);
+            syncData();
+        }
+
+        // --- 4. ROBOT AI (QUẢN LÝ SHOP) ---
+        function robotRun() {
+            let cmd = document.getElementById('robotIn').value.toLowerCase();
+            let num = cmd.match(/\d+/g); let ok = false;
+            if(num) {
+                products.forEach(p => {
+                    if(cmd.includes(p.key)) {
+                        if(cmd.includes("kho")) { p.total = parseInt(num[0]); p.sold = 0; ok = true; }
+                        else if(cmd.includes("giá")) {
+                            let gia = parseInt(num[num.length-1]);
+                            if(p.id===2) p.prices.default = gia;
+                            else {
+                                if(cmd.includes("1 ngày")) p.prices['1d'] = gia;
+                                if(cmd.includes("7 ngày")) p.prices['7d'] = gia;
+                                if(cmd.includes("30 ngày")) p.prices['30d'] = gia;
+                                if(cmd.includes("vĩnh viễn")) p.prices['vv'] = gia;
+                            }
+                            ok = true;
+                        }
+                    }
+                });
+            }
+            if(ok) { syncData(); document.getElementById('robotIn').value = ""; alert("Đã lưu thay đổi!"); }
+        }
+
+        // --- 5. HIỂN THỊ SHOP & MUA HÀNG ---
+        function renderShop() {
+            document.getElementById('moneyText').innerText = users[currentUser].balance.toLocaleString();
+            let grid = document.getElementById('shopGrid'); grid.innerHTML = "";
+            products.forEach(p => {
+                let sel = (p.id !== 2) ? `<select id="sel-${p.id}">
+                    <option value="1d">1 Ngày: ${p.prices['1d'].toLocaleString()}đ</option>
+                    <option value="7d">7 Ngày: ${p.prices['7d'].toLocaleString()}đ</option>
+                    <option value="30d">30 Ngày: ${p.prices['30d'].toLocaleString()}đ</option>
+                    <option value="vv">Vĩnh viễn: ${p.prices['vv'].toLocaleString()}đ</option></select>` : `<p style="font-weight:bold;color:#e67e22;margin:15px 0;">Giá: ${p.prices.default.toLocaleString()}đ</p>`;
+                
+                grid.innerHTML += `<div class="product-card">
+                    <h3>${p.name}</h3>
+                    <div class="stock-info">
+                        <div class="stat-box">Tổng <b>${p.total}</b></div>
+                        <div class="stat-box">Bán <b>${p.sold}</b></div>
+                        <div class="stat-box">Còn <b>${p.total-p.sold}</b></div>
+                    </div>
+                    ${sel}<button class="btn-main" onclick="buyItem(${p.id})">MUA NGAY</button>
+                </div>`;
+            });
+        }
+
+        function buyItem(id) {
+            let p = products[id];
+            let cost = (p.id !== 2) ? p.prices[document.getElementById(`sel-${p.id}`).value] : p.prices.default;
+            if(users[currentUser].balance >= cost && (p.total - p.sold) > 0) {
+                users[currentUser].balance -= cost; p.sold++; syncData(); alert("Mua thành công!");
+            } else alert("Số dư không đủ hoặc đã hết hàng!");
+        }
+
+        // --- 6. GIAO DIỆN ---
+        function toggleMenu() {
+            let m = document.getElementById('sideMenu'); let o = document.getElementById('overlay');
+            m.style.left = m.style.left === '0px' ? '-310px' : '0px';
+            o.style.display = o.style.display === 'block' ? 'none' : 'block';
+        }
+        function toggleTheme() {
+            let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            localStorage.setItem('v_theme', t);
+        }
+        if(localStorage.getItem('v_theme')) document.documentElement.setAttribute('data-theme', localStorage.getItem('v_theme'));
+    </script>
+</body>
+  </html>
+
